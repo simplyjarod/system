@@ -1,0 +1,25 @@
+#!/bin/sh
+#
+# This script will be executed *after* all the other init scripts.
+# You can put your own initialization stuff in here if you don't
+# want to do the full Sys V style init stuff.
+
+# MOTD (Message Of The Day):
+echo >> /etc/motd
+
+cat  /etc/redhat-release > /etc/motd
+echo "Powered by Tible Technologies (tibletech.com)" >> /etc/motd
+
+#uname -a >> /etc/motd
+#echo "server  : vps" >> /etc/motd
+#for i in `grep -h '^IPADDR=' /etc/sysconfig/network-scripts/ifcfg-venet0:0* | sed 's/^IPADDR=//'` ; do
+#	echo "ip: $i" >> /etc/motd
+#done
+
+#ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' >> /etc/motd
+
+echo >> /etc/motd
+
+/bin/cp /etc/motd /etc/issue
+
+touch /var/lock/subsys/local
