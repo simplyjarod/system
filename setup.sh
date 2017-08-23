@@ -39,6 +39,10 @@ yum install wget epel-release net-tools nmap nano mlocate -y
 updatedb # updates locate database
 
 
+# We need to execute some bash scripts with execution permissions:
+chmod u+x *.sh
+
+
 # FIREWALL: iptables
 ./iptables.sh
 
