@@ -21,6 +21,8 @@ if [[ $EUID -ne 0 ]]; then
 	exit 1
 fi
 
+centos_version=$(rpm -qa \*-release | grep -Ei "oracle|redhat|centos" | cut -d"-" -f3)
+
 # WARNING:
 echo -e "\e[91mIMPORTANTE: Sólo se podrá acceder por ssh con el nuevo usuario creado a continuación y haciendo uso de la clave hernani.pem, no se podrá acceder como root ni usando contraseña con ningún usuario. El equipo será reiniciado a la finalización de este script.\e[0m"
 
@@ -92,8 +94,11 @@ fi
 
 # AUTO-UPDATES: yum-cron
 yum install yum-cron -y
-sed -i "s|CHECK_ONLY=yes|CHECK_ONLY=no|g" /etc/sysconfig/yum-cron          # CentOS 6
-#sed -i "s|apply_updates = no|apply_updates = yes|g" /etc/yum/yum-cron.conf # CentOS 7
+if [ "$centos_version" -eq 6 ]; then
+	sed -i "s|CHECK_ONLY=yes|CHECK_ONLY=no|g" /etc/sysconfig/yum-cron          # CentOS 6
+else
+	sed -i "s|apply_updates = no|apply_updates = yes|g" /etc/yum/yum-cron.conf # CentOS 7
+fi
 service yum-cron restart
 service crond start
 chkconfig yum-cron on
@@ -106,8 +111,10 @@ chmod +x /usr/local/bin/rsub
 
 
 # CAMBIO ZONA HORARIA y sincronizacion de hora:
-#timedatectl set-timezone Europe/Madrid # CentOS 7
-#yum install ntp -y
+if [ "$centos_version" -eq 7 ]; then
+	timedatectl set-timezone Europe/Madrid
+fi
+#yum install ntp ntpdate -y
 #ntpdate time.apple.com
 
 
