@@ -1,7 +1,15 @@
 #!/bin/bash
 
 # Install/Update and flush all current rules
-yum install iptables -y
+centos_version=$(rpm -qa \*-release | grep -Ei "oracle|redhat|centos" | cut -d"-" -f3)
+if [ "$centos_version" -eq 6 ]; then
+  yum install iptables -y
+else
+  # Desactivamos firewalld (que viene por defecto en CentOS 7)
+  systemctl stop firewalld
+  systemctl mask firewalld
+  yum install iptables iptables-services -y
+fi
 iptables -F
 
 # Set default policies for INPUT, FORWARD and OUTPUT chains
