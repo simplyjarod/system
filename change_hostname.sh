@@ -1,9 +1,18 @@
 #!/bin/bash
 
-current=`hostname`
-
 read -r -p "Set new hostname: " newname
 new=${newname,,} # tolower
+
+centos_version=$(rpm -qa \*-release | grep -Ei "oracle|redhat|centos" | cut -d"-" -f3)
+if [ "$centos_version" -eq 7 ]; then
+  hostnamectl set-hostname $new
+  exit # finalizamos este script
+fi
+
+
+# Following lines are only for CentOS 6:
+
+current=`hostname`
 
 # 1) Network:
 sed -i "s|$current|$new|g" /etc/sysconfig/network
