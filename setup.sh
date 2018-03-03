@@ -37,6 +37,8 @@ fi
 
 
 # Install EPEL and some basics:
+yum install wget -y
+
 if [ "$centos_version" -eq 6 ]; then
 	wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm
 else
@@ -45,7 +47,7 @@ fi
 yum install ./epel-release-latest-*.noarch.rpm -y
 rm ./epel-release-latest-*.noarch.rpm -f
 
-yum install wget net-tools nmap nano mlocate -y
+yum install net-tools nmap nano mlocate -y
 updatedb # updates locate database
 
 
