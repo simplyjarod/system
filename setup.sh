@@ -29,8 +29,7 @@ echo -e "\e[91mIMPORTANTE: Sólo se podrá acceder por ssh con el nuevo usuario 
 # CONTINUE OR NOT?
 read -r -p "Continue? [y/N] " response
 res=${response,,} # tolower
-if ! [[ $res =~ ^(yes|y)$ ]]
-then
+if ! [[ $res =~ ^(yes|y)$ ]]; then
 	echo "Proceso abortado"
 	exit 1
 fi
@@ -59,30 +58,13 @@ chmod u+x *.sh
 ./iptables.sh
 
 
-# NEW USER with root privileges:
-read -r -p "Set new username: " username
-user=${username,,} # tolower
-useradd $user
-passwd $user
-#gpasswd -a $user wheel # si wheel no esta autorizado en sudoers esto no funciona
-echo >> /etc/sudoers
-echo "# Autorizamos al usuario $user" >> /etc/sudoers
-echo "$user ALL=(ALL) ALL" >> /etc/sudoers
+# NEW USER:
+./useradd.sh
 
 
-# SSH: claves rsa, motd y config
-mkdir -p /home/$user/.ssh
-cat hernani.pub >> /home/$user/.ssh/authorized_keys
-chown -R $user:$user /home/$user/.ssh
+# ssh: motd and sshd config
 \cp rc.local /etc/rc.d/rc.local
 rm -f /etc/motd /etc/issu*
-
-# -> to connect using private key without attach it each time:
-# eval `ssh-agent -s` # to start ssh-agent (do it only one time)
-# ssh-add xxx.pem     # to add the private key to the ssh-agent (do it once)
-# ssh user@ip-or-host # connect ssh normally each time
-# -> or forget the above three lines and use each time:
-# ssh -i xxx.pem user@ip-or-host
 
 \cp sshd_config /etc/ssh/sshd_config
 service sshd restart
@@ -129,12 +111,9 @@ fi
 
 
 # NANO, colorines:
-for f in /usr/share/nano/*
-do
-	echo "include $f" >> /home/$user/.nanorc
+for f in /usr/share/nano/*; do
 	echo "include $f" >> /root/.nanorc
 done
-chown $user:$user /home/$user/.nanorc
 
 
 # ALIAS:
@@ -144,8 +123,6 @@ alias ls='ls --color=auto'
 alias ll='ls -lah --color=auto'
 alias mv='mv -i'
 alias rm='rm -i'
-
-#runuser -l $user -c "cp='cp -i'" # no funciona :(
 
 
 # REBOOT:
