@@ -9,7 +9,6 @@ echo "    |_ creación de nuevo usuario con permisos de root"
 echo " |_ SSH:"
 echo "    |_ copiado de la clave .pub en authorized_keys"
 echo "    |_ configuración de sshd"
-echo "       |_ no se permitirá ssh con usuario root"
 echo "       |_ no se permitirá ssh con contraseña (sólo con clave hernani.pem)"
 echo " |_ IPv6: se inhabilitará IPv6"
 echo " |_yum-cron: instalación y configuración para actualizaciones automáticas"
@@ -66,7 +65,8 @@ chmod u+x *.sh
 \cp rc.local /etc/rc.d/rc.local
 rm -f /etc/motd /etc/issu*
 
-\cp sshd_config /etc/ssh/sshd_config
+sed -i "s|#PermitRootLogin yes|PermitRootLogin without-password|g" /etc/ssh/sshd_config
+sed -i "s|PasswordAuthentication yes|PasswordAuthentication no|g" /etc/ssh/sshd_config
 service sshd restart
 
 
@@ -87,9 +87,9 @@ fi
 # AUTO-UPDATES: yum-cron
 yum install yum-cron -y
 if [ "$centos_version" -eq 6 ]; then
-	sed -i "s|CHECK_ONLY=yes|CHECK_ONLY=no|g" /etc/sysconfig/yum-cron          # CentOS 6
+	sed -i "s|CHECK_ONLY=yes|CHECK_ONLY=no|g" /etc/sysconfig/yum-cron
 else
-	sed -i "s|apply_updates = no|apply_updates = yes|g" /etc/yum/yum-cron.conf # CentOS 7
+	sed -i "s|apply_updates = no|apply_updates = yes|g" /etc/yum/yum-cron.conf
 fi
 service yum-cron restart
 service crond start
@@ -98,8 +98,8 @@ chkconfig yum-cron on
 
 # Configuramos rsub para abrir remotamente los ficheros con Sublime Text:
 # Many thanks to: http://log.liminastudio.com/writing/tutorials/sublime-tunnel-of-love-how-to-edit-remote-files-with-sublime-text-via-an-ssh-tunnel
-wget -O /usr/local/bin/rsub https://raw.github.com/aurora/rmate/master/rmate
-chmod +x /usr/local/bin/rsub
+#wget -O /usr/local/bin/rsub https://raw.github.com/aurora/rmate/master/rmate
+#chmod +x /usr/local/bin/rsub
 
 
 # CAMBIO ZONA HORARIA y sincronizacion de hora:
