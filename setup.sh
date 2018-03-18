@@ -111,7 +111,7 @@ fi
 
 
 # NANO, colorines:
-for f in /usr/share/nano/*; do
+for f in /usr/share/nano/*.nanorc; do
 	echo "include $f" >> /root/.nanorc
 done
 
