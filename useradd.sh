@@ -30,7 +30,7 @@ chown -R $user:$user /home/$user/.ssh
 
 
 # NANO, colorines:
-for f in /usr/share/nano/*; do
+for f in /usr/share/nano/*.nanorc; do
 	echo "include $f" >> /home/$user/.nanorc
 done
 chown $user:$user /home/$user/.nanorc
