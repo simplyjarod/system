@@ -88,12 +88,16 @@ fi
 yum install yum-cron -y
 if [ "$centos_version" -eq 6 ]; then
 	sed -i "s|CHECK_ONLY=yes|CHECK_ONLY=no|g" /etc/sysconfig/yum-cron
+	service yum-cron restart
+	service crond start
+	chkconfig yum-cron on
 else
 	sed -i "s|apply_updates = no|apply_updates = yes|g" /etc/yum/yum-cron.conf
+	systemctl restart yum-cron
+	systemctl start crond
+	systemctl enable yum-cron
 fi
-service yum-cron restart
-service crond start
-chkconfig yum-cron on
+
 
 
 # Configuramos rsub para abrir remotamente los ficheros con Sublime Text:
