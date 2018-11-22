@@ -63,6 +63,7 @@ chmod u+x *.sh
 
 # ssh: motd and sshd config
 \cp rc.local /etc/rc.d/rc.local
+chmod +x /etc/rc.d/rc.local
 rm -f /etc/motd /etc/issu*
 
 sed -i "s|#PermitRootLogin yes|PermitRootLogin without-password|g" /etc/ssh/sshd_config
