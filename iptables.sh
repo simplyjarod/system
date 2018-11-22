@@ -40,6 +40,13 @@ iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 
 # Save and list settings:
 service iptables save
-service iptables restart
-chkconfig --level 345 iptables on
+
+if [ "$centos_version" -eq 6 ]; then
+	service iptables restart
+	chkconfig --level 345 iptables on
+else
+	systemctl restart iptables
+	systemctl enable iptables.service
+fi
+
 iptables -vnL --line-numbers
