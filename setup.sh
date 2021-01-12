@@ -67,6 +67,7 @@ chmod +x /etc/rc.d/rc.local
 rm -f /etc/motd /etc/issu*
 
 sed -i "s|#PermitRootLogin yes|PermitRootLogin without-password|g" /etc/ssh/sshd_config
+sed -i "s|PermitRootLogin yes|PermitRootLogin without-password|g" /etc/ssh/sshd_config
 sed -i "s|PasswordAuthentication yes|PasswordAuthentication no|g" /etc/ssh/sshd_config
 service sshd restart
 
