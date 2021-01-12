@@ -20,7 +20,7 @@ if [[ $EUID -ne 0 ]]; then
 	exit 1
 fi
 
-centos_version=$(rpm -qa \*-release | grep -Ei "oracle|redhat|centos" | cut -d"-" -f3)
+centos_version=$(rpm -qa \*-release | grep -Ei "oracle|redhat|centos" | sed 's/[^6-8]*//g' | cut -c1)
 
 # WARNING:
 echo -e "\e[91mIMPORTANTE: Sólo se podrá acceder por ssh con el nuevo usuario creado a continuación y haciendo uso de la clave hernani.pem, no se podrá acceder como root ni usando contraseña con ningún usuario. El equipo será reiniciado a la finalización de este script.\e[0m"
@@ -39,8 +39,10 @@ yum install wget -y
 
 if [ "$centos_version" -eq 6 ]; then
 	wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm
-else
+elif [ "$centos_version" -eq 7 ]; then
 	wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+else
+	wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 fi
 yum install ./epel-release-latest-*.noarch.rpm -y
 rm ./epel-release-latest-*.noarch.rpm -f
@@ -87,13 +89,14 @@ fi
 
 
 # AUTO-UPDATES: yum-cron
-yum install yum-cron -y
 if [ "$centos_version" -eq 6 ]; then
+	yum install yum-cron -y
 	sed -i "s|CHECK_ONLY=yes|CHECK_ONLY=no|g" /etc/sysconfig/yum-cron
 	service yum-cron restart
 	service crond start
 	chkconfig yum-cron on
-else
+elif [ "$centos_version" -eq 7 ]; then
+	yum install yum-cron -y
 	sed -i "s|apply_updates = no|apply_updates = yes|g" /etc/yum/yum-cron.conf
 	systemctl restart yum-cron
 	systemctl start crond
@@ -101,19 +104,12 @@ else
 fi
 
 
-
-# Configuramos rsub para abrir remotamente los ficheros con Sublime Text:
-# Many thanks to: http://log.liminastudio.com/writing/tutorials/sublime-tunnel-of-love-how-to-edit-remote-files-with-sublime-text-via-an-ssh-tunnel
-#wget -O /usr/local/bin/rsub https://raw.github.com/aurora/rmate/master/rmate
-#chmod +x /usr/local/bin/rsub
-
-
 # CAMBIO ZONA HORARIA y sincronizacion de hora:
 if [ "$centos_version" -eq 7 ]; then
 	timedatectl set-timezone Europe/Madrid
+elif [ "$centos_version" -eq 8 ]; then
+	timedatectl set-timezone Europe/Madrid
 fi
-#yum install ntp ntpdate -y
-#ntpdate time.apple.com
 
 
 # NANO, colorines:
