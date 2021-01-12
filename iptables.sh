@@ -1,11 +1,12 @@
 #!/bin/bash
 
 # Install/Update and flush all current rules
-centos_version=$(rpm -qa \*-release | grep -Ei "oracle|redhat|centos" | cut -d"-" -f3)
+centos_version=$(rpm -qa \*-release | grep -Ei "oracle|redhat|centos" | sed 's/[^6-8]*//g' | cut -c1)
+
 if [ "$centos_version" -eq 6 ]; then
   yum install iptables -y
 else
-  # Desactivamos firewalld (que viene por defecto en CentOS 7)
+  # Desactivamos firewalld (que viene por defecto en CentOS 7+)
   systemctl stop firewalld
   systemctl mask firewalld
   yum install iptables iptables-services -y
