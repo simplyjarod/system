@@ -3,8 +3,11 @@
 read -r -p "Set new hostname: " newname
 new=${newname,,} # tolower
 
-centos_version=$(rpm -qa \*-release | grep -Ei "oracle|redhat|centos" | cut -d"-" -f3)
+centos_version=$(rpm -qa \*-release | grep -Ei "oracle|redhat|centos" | sed 's/[^6-8]*//g' | cut -c1)
 if [ "$centos_version" -eq 7 ]; then
+  hostnamectl set-hostname $new
+  exit # finalizamos este script
+elif [ "$centos_version" -eq 8 ]; then
   hostnamectl set-hostname $new
   exit # finalizamos este script
 fi
