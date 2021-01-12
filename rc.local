@@ -5,7 +5,7 @@
 # You can put your own initialization stuff in here if you don't
 # want to do the full Sys V style init stuff.
 #
-# CentOS 7:
+# CentOS 7 & 8:
 # THIS FILE IS ADDED FOR COMPATIBILITY PURPOSES
 #
 # It is highly advisable to create own systemd services or udev rules
