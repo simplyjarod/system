@@ -55,6 +55,14 @@ updatedb # updates locate database
 chmod u+x *.sh
 
 
+# Disable SELinux:
+if [ "$centos_version" -eq 8 ]; then
+	sed -i "s|SELINUX=enforcing|SELINUX=disabled|g" /etc/selinux/config
+	sed -i "s|SELINUX=permissive|SELINUX=disabled|g" /etc/selinux/config
+	setenforce 0
+fi
+
+
 # FIREWALL: iptables
 ./iptables.sh
 
