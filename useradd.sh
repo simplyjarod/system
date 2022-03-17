@@ -20,17 +20,3 @@ fi
 mkdir -p /home/$user/.ssh
 cat *.pub >> /home/$user/.ssh/authorized_keys
 chown -R $user:$user /home/$user/.ssh
-
-# -> to connect using private key without attach it each time:
-# eval `ssh-agent -s` # to start ssh-agent (do it only one time)
-# ssh-add xxx.pem     # to add the private key to the ssh-agent (do it once)
-# ssh user@ip-or-host # connect ssh normally each time
-# -> or forget the above three lines and use each time:
-# ssh -i xxx.pem user@ip-or-host
-
-
-# NANO, colorines:
-for f in /usr/share/nano/*.nanorc; do
-	echo "include $f" >> /home/$user/.nanorc
-done
-chown $user:$user /home/$user/.nanorc

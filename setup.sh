@@ -5,11 +5,11 @@ echo -e "WARNING: Este script realiza las siguientes configuraciones:\e[0m"
 echo " |_ Firewall:"
 echo "    |_ iptables -> eliminará toda regla y establecerá nueva configuración"
 echo " |_ Usuario:"
-echo "    |_ creación de nuevo usuario con permisos de root"
+echo "    |_ creación de un nuevo usuario"
 echo " |_ SSH:"
-echo "    |_ copiado de la clave .pub en authorized_keys"
+echo "    |_ copiado de las claves .pub existentes en este directorio en authorized_keys"
 echo "    |_ configuración de sshd"
-echo "       |_ no se permitirá ssh con contraseña (sólo con clave hernani.pem)"
+echo "       |_ no se permitirá ssh con contraseña (sólo con clave pública/privada)"
 echo " |_ IPv6: se inhabilitará IPv6"
 echo " |_yum-cron: instalación y configuración para actualizaciones automáticas"
 echo ""
@@ -23,7 +23,7 @@ fi
 centos_version=$(rpm -qa \*-release | grep -Ei "oracle|redhat|centos" | sed 's/[^6-8]*//g' | cut -c1)
 
 # WARNING:
-echo -e "\e[91mIMPORTANTE: Sólo se podrá acceder por ssh con el nuevo usuario creado a continuación y haciendo uso de la clave hernani.pem, no se podrá acceder como root ni usando contraseña con ningún usuario. El equipo será reiniciado a la finalización de este script.\e[0m"
+echo -e "\e[91mIMPORTANTE: Sólo se podrá acceder por ssh con el nuevo usuario creado a continuación y haciendo uso de una de las claves privadas introducidas, no se podrá acceder como root ni usando contraseña con ningún usuario. El equipo será reiniciado a la finalización de este script.\e[0m"
 
 # CONTINUE OR NOT?
 read -r -p "Continue? [y/N] " response
@@ -55,8 +55,8 @@ updatedb # updates locate database
 chmod u+x *.sh
 
 
-# Disable SELinux:
-if [ "$centos_version" -eq 8 ]; then
+# Disable SELinux for CentOS 7 or greater:
+if [ "$centos_version" -ge 7 ]; then
 	sed -i "s|SELINUX=enforcing|SELINUX=disabled|g" /etc/selinux/config
 	sed -i "s|SELINUX=permissive|SELINUX=disabled|g" /etc/selinux/config
 	setenforce 0
@@ -113,9 +113,7 @@ fi
 
 
 # CAMBIO ZONA HORARIA y sincronizacion de hora:
-if [ "$centos_version" -eq 7 ]; then
-	timedatectl set-timezone Europe/Madrid
-elif [ "$centos_version" -eq 8 ]; then
+if [ "$centos_version" -ge 7 ]; then
 	timedatectl set-timezone Europe/Madrid
 fi
 
@@ -126,16 +124,17 @@ for f in /usr/share/nano/*.nanorc; do
 done
 
 
-# ALIAS:
-alias cp='cp -i'
-alias grep='grep --color=auto'
-alias ls='ls --color=auto'
-alias ll='ls -lah --color=auto'
-alias mv='mv -i'
-alias rm='rm -i'
+# Add bash aliases config in .bashrc  (only if it does not exist yet)
+cp .bash_aliases ~/
+grep .bash_aliases .bashrc || cat >> .bashrc <<EOF
 
+# User specific aliases and functions
+if [ -f ~/.bash_aliases ]; then
+	. ~/.bash_aliases
+fi
+EOF
 
 # REBOOT:
-echo "Solo podra acceder por ssh con el usuario recien creado usando la clave hernani.pem"
+echo "Solo podrá acceder por ssh con el usuario recién creado usando una clave privada autorizada"
 echo "Rebooting now. Have a nice day ;)"
 reboot
