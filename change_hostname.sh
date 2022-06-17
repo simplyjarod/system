@@ -3,13 +3,15 @@
 read -r -p "Set new hostname: " newname
 new=${newname,,} # tolower
 
+# Operative System:
+os=$(grep ^ID= /etc/os-release | cut -d "=" -f 2)
+os=${os,,} #tolower
+
 centos_version=$(rpm -qa \*-release | grep -Ei "oracle|redhat|centos" | sed 's/[^6-8]*//g' | cut -c1)
-if [ "$centos_version" -eq 7 ]; then
-  hostnamectl set-hostname $new
-  exit # finalizamos este script
-elif [ "$centos_version" -eq 8 ]; then
-  hostnamectl set-hostname $new
-  exit # finalizamos este script
+
+if [[ "$centos_version" -ge 7 || $os =~ "ubuntu" ]]; then
+	hostnamectl set-hostname $new
+	exit # end of this script
 fi
 
 

@@ -2,6 +2,8 @@
 
 echo -e "\e[91m############################################################"
 echo -e "WARNING: Este script realiza las siguientes configuraciones:\e[0m"
+echo " |_ SELinux:"
+echo "    |_ cambiará las políticas enforcing y permissive a disabled"
 echo " |_ Firewall:"
 echo "    |_ iptables -> eliminará toda regla y establecerá nueva configuración"
 echo " |_ Usuario:"
@@ -10,17 +12,15 @@ echo " |_ SSH:"
 echo "    |_ copiado de las claves .pub existentes en este directorio en authorized_keys"
 echo "    |_ configuración de sshd"
 echo "       |_ no se permitirá ssh con contraseña (sólo con clave pública/privada)"
-echo " |_ IPv6: se inhabilitará IPv6"
-echo " |_yum-cron: instalación y configuración para actualizaciones automáticas"
-echo ""
+echo " |_ IPv6: se deshabilitará IPv6"
+echo " |_ yum-cron: instalación y configuración para actualizaciones automáticas (solo CentOS 6 y 7)"
+echo 
 
 # ARE YOU ROOT (or sudo)?
 if [[ $EUID -ne 0 ]]; then
 	echo -e "\e[91mERROR: This script must be run as root\e[0m"
 	exit 1
 fi
-
-centos_version=$(rpm -qa \*-release | grep -Ei "oracle|redhat|centos" | sed 's/[^6-8]*//g' | cut -c1)
 
 # WARNING:
 echo -e "\e[91mIMPORTANTE: Sólo se podrá acceder por ssh con el nuevo usuario creado a continuación y haciendo uso de una de las claves privadas introducidas, no se podrá acceder como root ni usando contraseña con ningún usuario. El equipo será reiniciado a la finalización de este script.\e[0m"
@@ -33,21 +33,40 @@ if ! [[ $res =~ ^(yes|y)$ ]]; then
 	exit 1
 fi
 
+# Operative System:
+os=$(grep ^ID= /etc/os-release | cut -d "=" -f 2)
+os=${os,,} #tolower
+
 
 # Install EPEL and some basics:
-yum install wget -y
+if [[ $os =~ "centos" ]]; then # $os contains "centos"
 
-if [ "$centos_version" -eq 6 ]; then
-	wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm
-elif [ "$centos_version" -eq 7 ]; then
-	wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+	centos_version=$(rpm -qa \*-release | grep -Ei "oracle|redhat|centos" | sed 's/[^6-8]*//g' | cut -c1)
+
+	yum install wget -y
+
+	if [ "$centos_version" -eq 6 ]; then
+		wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm
+	elif [ "$centos_version" -eq 7 ]; then
+		wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+	else
+		wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+	fi
+	yum install ./epel-release-latest-*.noarch.rpm -y
+	rm ./epel-release-latest-*.noarch.rpm -f
+
+	yum install net-tools nmap nano mlocate -y
+
+elif [[ $os =~ "ubuntu" ]]; then # $os contains "ubuntu"
+
+	apt install wget net-tools nmap nano mlocate -y
+
 else
-	wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+	echo -e "\e[91mOS not detected. Nothing was done\e[0m"
+	exit 1
 fi
-yum install ./epel-release-latest-*.noarch.rpm -y
-rm ./epel-release-latest-*.noarch.rpm -f
 
-yum install net-tools nmap nano mlocate -y
+
 updatedb # updates locate database
 
 
@@ -55,8 +74,9 @@ updatedb # updates locate database
 chmod u+x *.sh
 
 
-# Disable SELinux for CentOS 7 or greater:
-if [ "$centos_version" -ge 7 ]; then
+# Disable SELinux for Ubuntu and CentOS 7 or greater:
+if [[ "$centos_version" -ge 7 || $os =~ "ubuntu" ]]; then
+	# In ubuntu, SELinux could be not installed/enabled, so this will show a warning (no problem)
 	sed -i "s|SELINUX=enforcing|SELINUX=disabled|g" /etc/selinux/config
 	sed -i "s|SELINUX=permissive|SELINUX=disabled|g" /etc/selinux/config
 	setenforce 0
@@ -72,12 +92,16 @@ fi
 
 
 # ssh: motd and sshd config
-\cp rc.local /etc/rc.d/rc.local
-chmod +x /etc/rc.d/rc.local
-rm -f /etc/motd /etc/issu*
+if [[ $os =~ "centos" ]]; then # $os contains "centos"
+	\cp rc.local /etc/rc.d/rc.local
+	chmod +x /etc/rc.d/rc.local
+	rm -f /etc/motd /etc/issu*
+fi
 
-sed -i "s|#PermitRootLogin yes|PermitRootLogin without-password|g" /etc/ssh/sshd_config
-sed -i "s|PermitRootLogin yes|PermitRootLogin without-password|g" /etc/ssh/sshd_config
+sed -i "s|#PermitRootLogin prohibit-password|PermitRootLogin prohibit-password|g" /etc/ssh/sshd_config
+sed -i "s|#PermitRootLogin yes|PermitRootLogin prohibit-password|g" /etc/ssh/sshd_config
+sed -i "s|PermitRootLogin yes|PermitRootLogin prohibit-password|g" /etc/ssh/sshd_config
+sed -i "s|#PasswordAuthentication yes|PasswordAuthentication no|g" /etc/ssh/sshd_config
 sed -i "s|PasswordAuthentication yes|PasswordAuthentication no|g" /etc/ssh/sshd_config
 service sshd restart
 
@@ -97,13 +121,13 @@ fi
 
 
 # AUTO-UPDATES: yum-cron
-if [ "$centos_version" -eq 6 ]; then
+if [[ "$centos_version" -eq 6 ]]; then
 	yum install yum-cron -y
 	sed -i "s|CHECK_ONLY=yes|CHECK_ONLY=no|g" /etc/sysconfig/yum-cron
 	service yum-cron restart
 	service crond start
 	chkconfig yum-cron on
-elif [ "$centos_version" -eq 7 ]; then
+elif [[ "$centos_version" -eq 7 ]]; then
 	yum install yum-cron -y
 	sed -i "s|apply_updates = no|apply_updates = yes|g" /etc/yum/yum-cron.conf
 	systemctl restart yum-cron
@@ -113,7 +137,7 @@ fi
 
 
 # CAMBIO ZONA HORARIA y sincronizacion de hora:
-if [ "$centos_version" -ge 7 ]; then
+if [[ "$centos_version" -ge 7 || $os =~ "ubuntu" ]]; then
 	timedatectl set-timezone Europe/Madrid
 fi
 

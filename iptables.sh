@@ -1,16 +1,28 @@
 #!/bin/bash
 
-# Install/Update and flush all current rules
-centos_version=$(rpm -qa \*-release | grep -Ei "oracle|redhat|centos" | sed 's/[^6-8]*//g' | cut -c1)
+# Operative System:
+os=$(grep ^ID= /etc/os-release | cut -d "=" -f 2)
+os=${os,,} #tolower
 
-if [ "$centos_version" -eq 6 ]; then
-  yum install iptables -y
-else
-  # Desactivamos firewalld (que viene por defecto en CentOS 7+)
-  systemctl stop firewalld
-  systemctl mask firewalld
-  yum install iptables iptables-services -y
+# Install/Update and flush all current rules
+if [[ $os =~ "centos" ]]; then # $os contains "centos"
+	
+	centos_version=$(rpm -qa \*-release | grep -Ei "oracle|redhat|centos" | sed 's/[^6-8]*//g' | cut -c1)
+	
+	if [ "$centos_version" -eq 6 ]; then
+		yum install iptables -y
+	else
+		# Desactivamos firewalld (que viene por defecto en CentOS 7+)
+		systemctl stop firewalld
+		systemctl mask firewalld
+		yum install iptables iptables-services -y
+	fi
+elif [[ $os =~ "ubuntu" ]]; then # $os contains "ubuntu"
+
+	# ufw is inactive by default, we don't do anything with it
+	apt install iptables -y
 fi
+
 iptables -F
 
 # Set default policies for INPUT, FORWARD and OUTPUT chains
@@ -40,7 +52,7 @@ iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 
 
 # Save and list settings:
-service iptables save
+iptables-save
 
 if [ "$centos_version" -eq 6 ]; then
 	service iptables restart

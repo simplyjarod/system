@@ -1,4 +1,4 @@
-# CentOS 6 / 7 / 8 system installation and configuration
+# CentOS 6, 7, 8 and Ubuntu system installation and configuration
 
 Please, **download _all files_ before executing any script**. There are several dependencies between them. You can use:
 ```bash
