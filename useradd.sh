@@ -20,5 +20,5 @@ fi
 mkdir -p /home/$user/.ssh
 for f in *.pub; do (cat $f; echo '') >> /home/$user/.ssh/authorized_keys; done
 chown -R $user:$user /home/$user/.ssh
-chmod 600 /home/$user/.ssh
+chmod 700 /home/$user/.ssh
 chmod 600 /home/$user/.ssh/authorized_keys
