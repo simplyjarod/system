@@ -59,6 +59,7 @@ if [[ $os =~ "centos" ]]; then # $os contains "centos"
 
 elif [[ $os =~ "ubuntu" ]]; then # $os contains "ubuntu"
 
+	apt update -y && apt upgrade -y
 	apt install wget net-tools nmap nano mlocate -y
 
 else
