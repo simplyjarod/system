@@ -1,9 +1,9 @@
 #!/bin/bash
 
 echo -e "\e[91m############################################################"
-echo -e "WARNING: Este script realiza las siguientes configuraciones:\e[0m"
+echo -e "WARNING: This script will perform the following actions:\e[0m"
 echo " |_ SELinux:"
-echo "    |_ cambiará las políticas enforcing y permissive a disabled"
+echo "    |_ Disable SELinux for Ubuntu and CentOS 7 or greater"
 echo " |_ Firewall:"
 echo "    |_ iptables -> eliminará toda regla y establecerá nueva configuración"
 echo " |_ Usuario:"
@@ -61,6 +61,7 @@ elif [[ $os =~ "ubuntu" ]]; then # $os contains "ubuntu"
 
 	apt update -y && apt upgrade -y
 	apt install wget net-tools nmap nano mlocate -y
+	apt autoremove -y
 
 else
 	echo -e "\e[91mOS not detected. Nothing was done\e[0m"
@@ -99,16 +100,27 @@ if [[ $os =~ "centos" ]]; then # $os contains "centos"
 	rm -f /etc/motd /etc/issu*
 fi
 
-sed -i "s|#PermitRootLogin prohibit-password|PermitRootLogin prohibit-password|g" /etc/ssh/sshd_config
-sed -i "s|#PermitRootLogin yes|PermitRootLogin prohibit-password|g" /etc/ssh/sshd_config
-sed -i "s|PermitRootLogin yes|PermitRootLogin prohibit-password|g" /etc/ssh/sshd_config
-sed -i "s|#PasswordAuthentication yes|PasswordAuthentication no|g" /etc/ssh/sshd_config
-sed -i "s|PasswordAuthentication yes|PasswordAuthentication no|g" /etc/ssh/sshd_config
+
+# SSH security:
+# Will change any line that starts by (commented or not), with space after it or not...
+sed -i -e '/^\(#\|\)\s*PermitRootLogin/s/^.*$/PermitRootLogin prohibit-password/' /etc/ssh/sshd_config
+sed -i -e '/^\(#\|\)\s*PasswordAuthentication/s/^.*$/PasswordAuthentication no/' /etc/ssh/sshd_config
+sed -i -e '/^\(#\|\)\s*X11Forwarding/s/^.*$/X11Forwarding no/' /etc/ssh/sshd_config
+sed -i -e '/^\(#\|\)\s*MaxAuthTries/s/^.*$/MaxAuthTries 5/' /etc/ssh/sshd_config
+sed -i -e '/^\(#\|\)\s*AllowTcpForwarding/s/^.*$/AllowTcpForwarding no/' /etc/ssh/sshd_config
+sed -i -e '/^\(#\|\)\s*AllowAgentForwarding/s/^.*$/AllowAgentForwarding no/' /etc/ssh/sshd_config
+sed -i -e '/^\(#\|\)\s*AuthorizedKeysFile/s/^.*$/AuthorizedKeysFile .ssh\/authorized_keys/' /etc/ssh/sshd_config
+
+
 service sshd restart
 
 
 # CHANGE HOSTNAME:
-./change_hostname.sh
+read -r -p "Current hostname is $(hostname). Would you like to change it? [y/N] " response
+res=${response,,} # tolower
+if [[ $res =~ ^(yes|y)$ ]]; then
+	./change_hostname.sh
+fi
 
 
 # DISABLE IPv6 NETWORKING:
@@ -151,7 +163,7 @@ done
 
 # Add bash aliases config in .bashrc  (only if it does not exist yet)
 cp .bash_aliases ~/
-grep .bash_aliases .bashrc || cat >> .bashrc <<EOF
+grep .bash_aliases ~/.bashrc || cat >> ~/.bashrc <<EOF
 
 # User specific aliases and functions
 if [ -f ~/.bash_aliases ]; then
@@ -160,6 +172,6 @@ fi
 EOF
 
 # REBOOT:
-echo "Solo podrá acceder por ssh con el usuario recién creado usando una clave privada autorizada"
+echo "ssh access will only be permitted by using an authorised RSA key."
 echo "Rebooting now. Have a nice day ;)"
 reboot

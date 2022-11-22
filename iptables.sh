@@ -20,7 +20,7 @@ if [[ $os =~ "centos" ]]; then # $os contains "centos"
 elif [[ $os =~ "ubuntu" ]]; then # $os contains "ubuntu"
 
 	# ufw is inactive by default, we don't do anything with it
-	apt install iptables -y
+	apt install iptables-persistent netfilter-persistent -y
 fi
 
 iptables -F
@@ -51,15 +51,20 @@ iptables -A INPUT -s 10.0.0.0/8 -p icmp -j ACCEPT
 iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 
 
-# Save and list settings:
-iptables-save
+# Save settings, restart service and enable on boot:
+if [[ $os =~ "ubuntu" ]]; then
+	netfilter-persistent save # saves in /etc/iptables/rules.v4
+	systemctl restart netfilter-persistent
+	systemctl enable  netfilter-persistent
 
-if [ "$centos_version" -eq 6 ]; then
+elif [ "$centos_version" -eq 6 ]; then
+	iptables-save
 	service iptables restart
 	chkconfig --level 345 iptables on
 else
+	iptables-save
 	systemctl restart iptables
-	systemctl enable iptables.service
+	systemctl enable  iptables.service
 fi
 
 iptables -vnL --line-numbers
