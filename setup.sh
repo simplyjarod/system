@@ -110,6 +110,7 @@ sed -i -e '/^\(#\|\)\s*MaxAuthTries/s/^.*$/MaxAuthTries 5/' /etc/ssh/sshd_config
 sed -i -e '/^\(#\|\)\s*AllowTcpForwarding/s/^.*$/AllowTcpForwarding no/' /etc/ssh/sshd_config
 sed -i -e '/^\(#\|\)\s*AllowAgentForwarding/s/^.*$/AllowAgentForwarding no/' /etc/ssh/sshd_config
 sed -i -e '/^\(#\|\)\s*AuthorizedKeysFile/s/^.*$/AuthorizedKeysFile .ssh\/authorized_keys/' /etc/ssh/sshd_config
+sed -i -e '/AuthorizedKeysFile/aPubkeyAcceptedKeyTypes +ssh-rsa # Visual Studio Code Hack' /etc/ssh/sshd_config
 
 
 service sshd restart
