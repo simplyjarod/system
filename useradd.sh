@@ -25,6 +25,21 @@ chmod 700 /home/$user/.ssh
 chmod 600 /home/$user/.ssh/authorized_keys
 
 
+# Change Shell to Bash:
+chsh -s /bin/bash $user
+
+
+# Add bash aliases config in .bashrc  (only if it does not exist yet):
+cp .bash_aliases /home/$user/
+grep .bash_aliases /home/$user/.bashrc || cat >> /home/$user/.bashrc <<EOF
+
+# User specific aliases and functions
+if [ -f /home/$user/.bash_aliases ]; then
+	. /home/$user/.bash_aliases
+fi
+EOF
+
+
 # NANO, colorines:
 for f in /usr/share/nano/*.nanorc; do
 	echo "include $f" >> /home/$user/.nanorc
