@@ -1,6 +1,6 @@
 #!/bin/bash
 
-read -r -p "Set new username: " username
+read -r -e -p "Set new username: " username
 user=${username,,} # tolower
 useradd $user
 passwd $user

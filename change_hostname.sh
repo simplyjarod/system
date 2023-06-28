@@ -1,6 +1,6 @@
 #!/bin/bash
 
-read -r -p "Set new hostname: " newname
+read -r -e -p "Set new hostname: " newname
 new=${newname,,} # tolower
 
 # Operative System:
