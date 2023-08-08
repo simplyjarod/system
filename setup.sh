@@ -1,19 +1,15 @@
 #!/bin/bash
 
-echo -e "\e[91m############################################################"
-echo -e "WARNING: This script will perform the following actions:\e[0m"
-echo " |_ SELinux:"
-echo "    |_ Disable SELinux for Ubuntu and CentOS 7 or greater"
-echo " |_ Firewall:"
-echo "    |_ iptables -> eliminará toda regla y establecerá nueva configuración"
-echo " |_ Usuario:"
-echo "    |_ creación de un nuevo usuario"
+echo -e "\e[91mWARNING #######################################################"
+echo -e "This script will perform the following actions:\e[0m"
+echo " |_ SELinux: Disable SELinux for Ubuntu and CentOS 7 or greater"
+echo " |_ Firewall: Elimina toda regla existente y configura iptables"
+echo " |_ User: (opcional) Crea un nuevo usuario"
 echo " |_ SSH:"
-echo "    |_ copiado de las claves .pub existentes en este directorio en authorized_keys"
-echo "    |_ configuración de sshd"
-echo "       |_ no se permitirá ssh con contraseña (sólo con clave pública/privada)"
-echo " |_ IPv6: se deshabilitará IPv6"
-echo " |_ yum-cron: instalación y configuración para actualizaciones automáticas (solo CentOS 6 y 7)"
+echo "    |_ Copia las claves de pub_keys/*.pub a .ssh/authorized_keys"
+echo "    |_ Bloquea ssh con contraseña. Solo acceso con clave privada"
+echo " |_ IPv6: Deshabilita IPv6"
+echo " |_ yum-cron: Actualizaciones automáticas (solo en CentOS 6 y 7)"
 echo 
 
 # ARE YOU ROOT (or sudo)?
@@ -23,7 +19,7 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 # WARNING:
-echo -e "\e[91mIMPORTANTE: Sólo se podrá acceder por ssh con el nuevo usuario creado a continuación y haciendo uso de una de las claves privadas introducidas, no se podrá acceder como root ni usando contraseña con ningún usuario. El equipo será reiniciado a la finalización de este script.\e[0m"
+echo -e "\e[91mIMPORTANTE: Sólo se podrá acceder por ssh con el usuario root o el nuevo usuario creado a continuación y haciendo uso de una de las claves privadas existentes en pub_keys. No se podrá acceder como root ni usando contraseña con ningún usuario. El equipo será reiniciado a la finalización de este script.\e[0m"
 
 # CONTINUE OR NOT?
 read -r -p "Continue? [y/N] " response
@@ -77,7 +73,7 @@ chmod u+x *.sh
 
 
 # Disable SELinux for Ubuntu and CentOS 7 or greater:
-if [[ "$centos_version" -ge 7 || $os =~ "ubuntu" ]]; then
+if [[ "$centos_version" -ge 7 ]]; then
 	# In ubuntu, SELinux could be not installed/enabled, so this will show a warning (no problem)
 	sed -i "s|SELINUX=enforcing|SELINUX=disabled|g" /etc/selinux/config
 	sed -i "s|SELINUX=permissive|SELINUX=disabled|g" /etc/selinux/config
@@ -90,7 +86,16 @@ fi
 
 
 # NEW USER:
-./useradd.sh
+read -r -p "Create new user? [y/N] " response
+res=${response,,} # tolower
+if [[ $res =~ ^(yes|y)$ ]]; then
+	./useradd.sh
+else
+	mkdir -p /root/.ssh
+	for f in pub_keys/*.pub; do (cat $f; echo '') >> /root/.ssh/authorized_keys; done
+	chmod 700 /root/.ssh
+	chmod 600 /root/.ssh/authorized_keys
+fi
 
 
 # ssh: motd and sshd config

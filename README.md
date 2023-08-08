@@ -12,9 +12,6 @@ chmod u+x *.sh -R
 
 ## Ubuntu
 ```bash
-apt update -y && apt upgrade -y
-apt install wget unzip -y
-wget https://github.com/simplyjarod/system/archive/master.zip
-unzip master.zip && cd system-master && rm -rf ../master.zip
-chmod u+x *.sh -R
+git clone https://github.com/simplyjarod/system && cd system
+bash setup.sh
 ```

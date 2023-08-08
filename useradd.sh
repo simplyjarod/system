@@ -18,7 +18,7 @@ fi
 
 # SSH: RSA key
 mkdir -p /home/$user/.ssh
-for f in *.pub; do (cat $f; echo '') >> /home/$user/.ssh/authorized_keys; done
+for f in pub_keys/*.pub; do (cat $f; echo '') >> /home/$user/.ssh/authorized_keys; done
 chown -R $user:$user /home/$user/.ssh
 chown $user:$user /home/$user
 chmod 700 /home/$user/.ssh
